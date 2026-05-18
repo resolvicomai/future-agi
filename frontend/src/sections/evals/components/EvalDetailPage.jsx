@@ -55,24 +55,10 @@ import EvalUsageTab from "./EvalUsageTab";
 import VersionBadge from "./VersionBadge";
 import { EVAL_TAGS } from "../constant";
 import { FAGI_MODEL_VALUES } from "./ModelSelector";
-
-// Reads canonical `{internet, connectors[]}` first, falls back to legacy `{uuid: true}` shape.
-const extract_selected_tools = (tools) => {
-  if (!tools) return [];
-  if (Array.isArray(tools)) return tools;
-  if (typeof tools === "object") {
-    if (Array.isArray(tools.connectors)) return tools.connectors.filter(Boolean);
-    return Object.entries(tools)
-      .filter(([key, enabled]) => !!enabled && key !== "internet")
-      .map(([name]) => name);
-  }
-  return [];
-};
-
-const build_tools_payload = (selected_connector_ids, internet_enabled = false) => ({
-  internet: !!internet_enabled,
-  connectors: (selected_connector_ids || []).filter(Boolean),
-});
+import {
+  buildToolsPayload,
+  extractSelectedTools,
+} from "src/sections/common/EvalPicker/evalPickerConfigUtils";
 
 const resolve_summary_type = (summary) => {
   if (summary && typeof summary === "object" && summary.type) {
@@ -312,7 +298,7 @@ const EvalDetailPage = () => {
           setCheckInternet(config.check_internet ?? false);
           setAgentMode(config.agent_mode || "agent");
           setSummaryType(resolve_summary_type(config.summary));
-          setConnectorIds(extract_selected_tools(config.tools));
+          setConnectorIds(extractSelectedTools(config.tools));
           setKnowledgeBaseIds(
             Array.isArray(config.knowledge_bases) ? config.knowledge_bases : [],
           );
@@ -436,7 +422,7 @@ const EvalDetailPage = () => {
       setCheckInternet(config.check_internet ?? false);
       setAgentMode(config.agent_mode || "agent");
       setSummaryType(resolve_summary_type(config.summary));
-      setConnectorIds(extract_selected_tools(config.tools));
+      setConnectorIds(extractSelectedTools(config.tools));
       setKnowledgeBaseIds(
         Array.isArray(config.knowledge_bases) ? config.knowledge_bases : [],
       );
@@ -542,7 +528,7 @@ const EvalDetailPage = () => {
         setCheckInternet(config.check_internet ?? false);
         setAgentMode(config.agent_mode || "agent");
         setSummaryType(resolve_summary_type(config.summary));
-        setConnectorIds(extract_selected_tools(config.tools));
+        setConnectorIds(extractSelectedTools(config.tools));
         setKnowledgeBaseIds(
           Array.isArray(config.knowledge_bases) ? config.knowledge_bases : [],
         );
@@ -684,7 +670,7 @@ const EvalDetailPage = () => {
         summaryType === "custom"
           ? { type: "custom", custom: "" }
           : { type: summaryType };
-      const tools = build_tools_payload(connectorIds, checkInternet);
+      const tools = buildToolsPayload(connectorIds, checkInternet);
       // Update the template first
       const payload = {
         instructions: evalType === "code" ? "" : instructions,
@@ -874,7 +860,7 @@ const EvalDetailPage = () => {
           summaryType === "custom"
             ? { type: "custom", custom: "" }
             : { type: summaryType };
-        const tools = build_tools_payload(connectorIds, checkInternet);
+        const tools = buildToolsPayload(connectorIds, checkInternet);
         await updateEval.mutateAsync({
           instructions: evalType === "code" ? "" : instructions,
           code: evalType === "code" ? code : undefined,
@@ -1789,7 +1775,7 @@ const EvalDetailPage = () => {
                       }
                       if (evalType === "agent") {
                         overrides.agent_mode = agentMode;
-                        overrides.tools = build_tools_payload(
+                        overrides.tools = buildToolsPayload(
                           connectorIds,
                           checkInternet,
                         );

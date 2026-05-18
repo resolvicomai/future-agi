@@ -72,16 +72,12 @@ import { format } from "date-fns";
 import {
   buildEvalTemplateConfig,
   buildCompositeSourceModeProps,
+  buildToolsPayload,
   contextOptionsForRowType,
   extractCodeEvaluateParams,
   getSourceModeVariables,
   hasNonEmptyPromptMessage,
 } from "./evalPickerConfigUtils";
-
-const build_tools_payload = (selected_connector_ids, internet_enabled = false) => ({
-  internet: !!internet_enabled,
-  connectors: (selected_connector_ids || []).filter(Boolean),
-});
 
 // ── Main Component ──
 
@@ -862,7 +858,7 @@ const EvalPickerConfigFull = ({ evalData, onBack, onSave, isSaving }) => {
       if (contextOptions.includes("full_row")) flags.full_row = true;
       return Object.keys(flags).length > 0 ? flags : { full_row: true };
     })();
-    const tools = build_tools_payload(connectorIds, useInternet);
+    const tools = buildToolsPayload(connectorIds, useInternet);
 
     const templateType =
       fullEval?.template_type ||

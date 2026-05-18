@@ -40,6 +40,10 @@ import CodeEvalEditor, {
 import CompositeDetailPanel from "./CompositeDetailPanel";
 import UnsavedChangesDialog from "src/sections/projects/MonitorsView/UnsavedChangesDialog";
 import { extractVariables } from "src/utils/utils";
+import {
+  buildToolsPayload,
+  extractSelectedTools,
+} from "src/sections/common/EvalPicker/evalPickerConfigUtils";
 
 const EVAL_TYPE_TABS = [
   { value: "agent", label: "Agents" },
@@ -86,24 +90,6 @@ const EVAL_TAGS = [
   { value: "finance", label: "Finance", icon: "mdi:currency-usd" },
   { value: "agents", label: "Agents", icon: "mdi:robot-excited-outline" },
 ];
-
-// Reads canonical `{internet, connectors[]}` first, falls back to legacy `{uuid: true}` shape.
-const extractSelectedTools = (tools) => {
-  if (!tools) return [];
-  if (Array.isArray(tools)) return tools;
-  if (typeof tools === "object") {
-    if (Array.isArray(tools.connectors)) return tools.connectors.filter(Boolean);
-    return Object.entries(tools)
-      .filter(([key, enabled]) => !!enabled && key !== "internet")
-      .map(([name]) => name);
-  }
-  return [];
-};
-
-const buildToolsPayload = (selectedConnectorIds, internetEnabled = false) => ({
-  internet: !!internetEnabled,
-  connectors: (selectedConnectorIds || []).filter(Boolean),
-});
 
 const resolveSummaryType = (summary) => {
   if (summary && typeof summary === "object" && summary.type) {

@@ -1748,6 +1748,7 @@ SimulationTestMode.propTypes = {
   initialRunTestId: PropTypes.string,
   isComposite: PropTypes.bool,
   compositeAdhocConfig: PropTypes.object,
+  runtimeOverrides: PropTypes.object,
 };
 
 export default SimulationTestMode;

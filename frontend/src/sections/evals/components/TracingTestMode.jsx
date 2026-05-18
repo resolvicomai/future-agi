@@ -1916,6 +1916,7 @@ TracingTestMode.propTypes = {
   compositeAdhocConfig: PropTypes.object,
   localFilters: PropTypes.array,
   allowCustomFieldPath: PropTypes.bool,
+  runtimeOverrides: PropTypes.object,
 };
 
 export default TracingTestMode;

@@ -128,3 +128,36 @@ export const getSourceModeVariables = ({
   variables = [],
   compositeUnionKeys = [],
 }) => (isComposite ? compositeUnionKeys : variables);
+
+// ── Tools payload (connectors + internet flag) ──────────────────────────
+//
+// Canonical shape sent to the BE / stored on EvalTemplate.config.tools:
+//   { internet: bool, connectors: [<connector_id>, ...] }
+//
+// Legacy shape still observed in older saved configs:
+//   { <connector_id>: true, ... }   // no separate internet flag
+//
+// `extractSelectedTools` normalises whatever shape it gets back into a
+// flat array of connector ids the FE state holds, and `buildToolsPayload`
+// re-canonicalises that array + the internet toggle into the shape we
+// send to the BE. Centralised here so EvalCreatePage, EvalDetailPage and
+// EvalPickerConfigFull stay in sync — they used to each define their own
+// near-identical copies which drifted over time.
+export const extractSelectedTools = (tools) => {
+  if (!tools) return [];
+  if (Array.isArray(tools)) return tools;
+  if (typeof tools === "object") {
+    if (Array.isArray(tools.connectors)) {
+      return tools.connectors.filter(Boolean);
+    }
+    return Object.entries(tools)
+      .filter(([key, enabled]) => !!enabled && key !== "internet")
+      .map(([name]) => name);
+  }
+  return [];
+};
+
+export const buildToolsPayload = (selectedConnectorIds, internetEnabled = false) => ({
+  internet: !!internetEnabled,
+  connectors: (selectedConnectorIds || []).filter(Boolean),
+});

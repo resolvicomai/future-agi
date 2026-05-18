@@ -1728,6 +1728,7 @@ DatasetTestMode.propTypes = {
   extraColumns: PropTypes.array,
   isComposite: PropTypes.bool,
   compositeAdhocConfig: PropTypes.object,
+  runtimeOverrides: PropTypes.object,
 };
 
 export default DatasetTestMode;

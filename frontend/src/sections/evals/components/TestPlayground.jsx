@@ -1886,6 +1886,7 @@ TestPlayground.propTypes = {
   codeLanguage: PropTypes.string,
   onReadyChange: PropTypes.func,
   isSystemEval: PropTypes.bool,
+  runtimeOverrides: PropTypes.object,
 };
 
 export default TestPlayground;
