@@ -48,7 +48,8 @@ def _log_and_deduct_cost_for_standalone_eval(
     except ImportError:
         check_usage = None
 
-    usage_check = check_usage(str(user.organization.id), api_call_type)
+    if check_usage is not None:
+        usage_check = check_usage(str(user.organization.id), api_call_type)
     if not usage_check.allowed:
         raise ValueError(usage_check.reason or "Usage limit exceeded")
 
@@ -57,7 +58,8 @@ def _log_and_deduct_cost_for_standalone_eval(
     if kb_id:
         log_config.update({"kb_id": str(kb_id)})
 
-    api_call_log_row = log_and_deduct_cost_for_api_request(
+    if log_and_deduct_cost_for_api_request is not None:
+        api_call_log_row = log_and_deduct_cost_for_api_request(
         organization=user.organization,
         api_call_type=api_call_type,
         source="standalone_v2",
@@ -275,7 +277,9 @@ def _run_eval(eval_template, inputs, model, user, workspace, eval_config=None):
         credits = billing_config.calculate_ai_credits(actual_cost)
 
         api_call_type = _get_api_call_type(model)
-        emit(
+        if emit is not None and UsageEvent is not None:
+
+            emit(
             UsageEvent(
                 org_id=str(user.organization.id),
                 event_type=api_call_type,
@@ -536,7 +540,10 @@ def _run_protect(
             actual_cost = llm_cost + per_run_fee
             credits = billing_config.calculate_ai_credits(actual_cost)
 
-            emit(
+            if emit is not None and UsageEvent is not None:
+
+
+                emit(
                 UsageEvent(
                     org_id=str(user.organization.id),
                     event_type=_get_api_call_type(

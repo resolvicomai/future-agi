@@ -181,10 +181,20 @@ def process_single_evaluation(user_eval_metric):
         if is_oss():
             user_eval_metric.status = StatusType.FAILED.value
             user_eval_metric.save(update_fields=["status"])
-            raise ValueError(
+            _err_msg = (
                 "Agent evaluations are not available on your plan. "
                 "Use LLM-as-a-Judge or Code evaluations instead."
             )
+            # Mark cells as error so the UI doesn't stay stuck on loading
+            class _ErrInfo:
+                error_code = "ENTITLEMENT_DENIED"
+                reason = _err_msg
+                dimension = ""
+                current_usage = 0
+                limit = 0
+                upgrade_cta = None
+            _mark_cells_usage_limit_error(user_eval_metric, _ErrInfo())
+            raise ValueError(_err_msg)
 
     try:
         from ee.usage.services.metering import check_usage
@@ -1090,7 +1100,8 @@ def process_single_error_localization(task_id):
                 raise ValueError(usage_check.reason or "Usage limit exceeded")
 
         # Log and deduct cost for error localization
-        api_call_log_row = log_and_deduct_cost_for_api_request(
+        if log_and_deduct_cost_for_api_request is not None:
+            api_call_log_row = log_and_deduct_cost_for_api_request(
             organization=task.organization,
             api_call_type=APICallTypeChoices.ERROR_LOCALIZER.value,
             workspace=task.workspace,
@@ -1134,7 +1145,8 @@ def process_single_error_localization(task_id):
                 f"Error in process_single_error_localization: {str(e)}\n{traceback.format_exc()}"
             )
             task.mark_as_failed(str(e))
-            refund_cost_for_api_call(api_call_log_row)
+            if refund_cost_for_api_call is not None:
+                refund_cost_for_api_call(api_call_log_row)
             return
 
         # Check if we got valid results
@@ -1143,7 +1155,8 @@ def process_single_error_localization(task_id):
                 f"Error localization returned empty results for cell {task.source_id}"
             )
             task.mark_as_skipped("Error localization returned empty results")
-            refund_cost_for_api_call(api_call_log_row)
+            if refund_cost_for_api_call is not None:
+                refund_cost_for_api_call(api_call_log_row)
             return
 
         # Update the task with the results
@@ -1175,7 +1188,8 @@ def process_single_error_localization(task_id):
                 actual_cost = getattr(localizer.llm, "cost", {}).get("total_cost", 0)
             credits = BillingConfig.get().calculate_ai_credits(actual_cost)
 
-            emit(
+            if emit is not None:
+                emit(
                 UsageEvent(
                     org_id=str(task.organization.id),
                     event_type=BillingEventType.ERROR_LOCALIZER,
@@ -1226,7 +1240,8 @@ def process_single_error_localization(task_id):
                         logger.info("Log doesn't exist.")
             except Exception as e:
                 logger.error(f"Error in updating cell metadata: {str(e)}")
-                refund_cost_for_api_call(api_call_log_row)
+                if refund_cost_for_api_call is not None:
+                    refund_cost_for_api_call(api_call_log_row)
                 task.mark_as_failed(str(e))
 
         elif task.source == ErrorLocalizerSource.OBSERVE:
@@ -1263,7 +1278,8 @@ def process_single_error_localization(task_id):
 
             except Exception as e:
                 logger.error(f"Error in updating span metadata: {str(e)}")
-                refund_cost_for_api_call(api_call_log_row)
+                if refund_cost_for_api_call is not None:
+                    refund_cost_for_api_call(api_call_log_row)
                 task.mark_as_failed(str(e))
 
         elif task.source == ErrorLocalizerSource.PLAYGROUND:
@@ -1280,7 +1296,8 @@ def process_single_error_localization(task_id):
                 eval_logger.save(update_fields=["config"])
             except Exception as e:
                 logger.exception(f"Error in updating log config: {str(e)}")
-                refund_cost_for_api_call(api_call_log_row)
+                if refund_cost_for_api_call is not None:
+                    refund_cost_for_api_call(api_call_log_row)
                 task.mark_as_failed(str(e))
     finally:
         close_old_connections()

@@ -112,7 +112,8 @@ class DevelopOptimizer:
             }
             organization = column.dataset.organization
             api_call_type = APICallTypeChoices.DATASET_OPTIMIZATION.value
-            log_and_deduct_cost_for_api_request(
+            if log_and_deduct_cost_for_api_request is not None:
+                log_and_deduct_cost_for_api_request(
                 organization,
                 api_call_type,
                 config,
@@ -133,7 +134,8 @@ class DevelopOptimizer:
                 except ImportError:
                     emit = None
 
-                emit(
+                if emit is not None:
+                    emit(
                     UsageEvent(
                         org_id=str(organization.id),
                         event_type=api_call_type,
@@ -176,7 +178,8 @@ class DevelopOptimizer:
                 api_call_log_row.status = APICallStatusChoices.ERROR.value
                 api_call_log_row.save()
                 refund_config = {"reference_id": str(optimizer_row.id)}
-                refund_cost_for_api_call(api_call_log_row, config=refund_config)
+                if refund_cost_for_api_call is not None:
+                    refund_cost_for_api_call(api_call_log_row, config=refund_config)
             else:
                 # update the api call log row
                 api_call_log_row.status = APICallStatusChoices.SUCCESS.value

@@ -238,7 +238,10 @@ def run_eval_func(
         if check_usage is not None:
             usage_check = check_usage(str(org.id), api_call_type)
             if not usage_check.allowed:
-                raise UsageLimitExceeded(usage_check)
+                if UsageLimitExceeded is not None:
+                    raise UsageLimitExceeded(usage_check)
+                else:
+                    raise ValueError(str(usage_check))
 
         if log_and_deduct_cost_for_api_request is not None:
             api_call_log_row = log_and_deduct_cost_for_api_request(
@@ -431,7 +434,10 @@ def run_eval_func(
 
             credits = billing_config.calculate_ai_credits(actual_cost)
 
-            emit(
+            if emit is not None and UsageEvent is not None:
+
+
+                emit(
                 UsageEvent(
                     org_id=str(org.id),
                     event_type=api_call_type,

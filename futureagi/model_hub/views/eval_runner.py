@@ -1145,7 +1145,9 @@ class EvaluationRunner:
                     if _is_code_eval
                     else _get_api_call_type(self.user_eval_metric.model)
                 )
-                emit(
+                if emit is not None and UsageEvent is not None:
+
+                    emit(
                     UsageEvent(
                         org_id=emit_org_id,
                         event_type=eval_event_type,
@@ -1292,7 +1294,8 @@ class EvaluationRunner:
                 }
             )
 
-        api_call_log_row = log_and_deduct_cost_for_api_request(
+        if log_and_deduct_cost_for_api_request is not None:
+            api_call_log_row = log_and_deduct_cost_for_api_request(
             org if org else self.user_eval_metric.organization,
             api_call_type,
             config=api_call_config,
@@ -2239,9 +2242,9 @@ class EvaluationRunner:
         except Exception:
             logger.error(f"unable to retrieve rule prompt for column id : {column_id}")
 
-        input_token_count = count_tiktoken_tokens(
+        input_token_count = (count_tiktoken_tokens(
             input_words_string, cell_values_image_urls
-        )
+        ) if count_tiktoken_tokens else 0)
         return input_token_count
 
     def _resolve_version(self):
@@ -2596,7 +2599,8 @@ class EvaluationRunner:
                 api_call_log_row.save(update_fields=["status"])
 
                 refund_config = {"evaluation_id": str(self.user_eval_metric_id)}
-                refund_cost_for_api_call(api_call_log_row, config=refund_config)
+                if refund_cost_for_api_call is not None:
+                    refund_cost_for_api_call(api_call_log_row, config=refund_config)
             except Exception as e:
                 logger.error(f"Error refunding cost for api call: {str(e)}")
         elif value == CellStatus.PASS.value and api_call_log_row:
@@ -3047,7 +3051,8 @@ class EvaluationRunner:
                 getattr(self.user_eval_metric, "model", None)
                 or ModelChoices.TURING_LARGE.value
             )
-            usage_check = check_usage(org_id, api_call_type)
+            if check_usage is not None:
+                usage_check = check_usage(org_id, api_call_type)
             if not usage_check.allowed:
                 self.user_eval_metric.status = StatusType.FAILED.value
                 self.user_eval_metric.save(update_fields=["status"])
